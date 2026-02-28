@@ -1,0 +1,37 @@
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+
+local UpdateBio      = Remotes:WaitForChild("UpdateBio")
+local UpdateBioColor = Remotes:WaitForChild("UpdateBioColor")
+local UpdateRPColor  = Remotes:WaitForChild("UpdateRPColor")
+
+local bioSet = false
+
+if not bioSet then
+    UpdateBio:FireServer("riri")
+    bioSet = true
+end
+
+local SPEED      = 100
+local SATURATION = 0.65
+local VALUE      = 0.98
+
+local accumulatedBio = 0
+local accumulatedRP  = 0
+
+local PHASE_OFFSET = 0.22
+
+RunService.RenderStepped:Connect(function(dt)
+    accumulatedBio = accumulatedBio + dt * SPEED
+    accumulatedRP  = accumulatedRP  + dt * SPEED
+
+    local hueBio = (accumulatedBio + PHASE_OFFSET) % 1
+    local pastelBio = Color3.fromHSV(hueBio, SATURATION, VALUE)
+
+    local hueRP = accumulatedRP % 1
+    local pastelRP = Color3.fromHSV(hueRP, SATURATION, VALUE)
+
+    UpdateBioColor:FireServer(pastelBio)
+    UpdateRPColor:FireServer(pastelRP)
+end)
