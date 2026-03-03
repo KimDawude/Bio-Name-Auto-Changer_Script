@@ -9,7 +9,7 @@ local UpdateRPColor  = Remotes:WaitForChild("UpdateRPColor")
 local bioSet = false
 
 if not bioSet then
-    UpdateBio:FireServer("DawudeGangster")
+    UpdateBio:FireServer("Dawude is Hac4er")
     bioSet = true
 end
 
