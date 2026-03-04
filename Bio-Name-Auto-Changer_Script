@@ -1,37 +1,394 @@
-local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- EVENTS
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local ColorRemote = Remotes:WaitForChild("UpdateRPColor")
+local NameRemote = Remotes:WaitForChild("UpdateRPName")
+local BioColorRemote = Remotes:WaitForChild("UpdateBioColor")
 
-local UpdateBio      = Remotes:WaitForChild("UpdateBio")
-local UpdateBioColor = Remotes:WaitForChild("UpdateBioColor")
-local UpdateRPColor  = Remotes:WaitForChild("UpdateRPColor")
+-- SETTINGS (AUTO)
+local HueIncrement = 0.001
+local NameSpeed = 0.1
+local BioUpdateFrequency = 0.1
+local ColorSpeed = 100
+local UseAllColors = true
 
-local bioSet = false
+-- VARIABLES
+local lastNameUpdate = 0
+local lastBioUpdate = 0
+local charCount = 1
+local Connection
+local Word = ""
+local Hue = 0
+local isBioColorRemoteFunction = BioColorRemote:IsA("RemoteFunction")
+local isRunning = false
 
-if not bioSet then
-    UpdateBio:FireServer("Dawude is Hac4er")
-    bioSet = true
+-- ===== GET DISPLAY NAME =====
+local function GetDisplayName()
+    if LocalPlayer and LocalPlayer:FindFirstChild("DisplayName") then
+        return LocalPlayer.DisplayName
+    end
+    return LocalPlayer.Name
 end
 
-local SPEED      = 100
-local SATURATION = 0.65
-local VALUE      = 0.98
+-- ===== RAINBOW COLORS ARRAY =====
+local RainbowColors = {
+    Color3.fromRGB(255, 0, 0),      -- سرخ
+    Color3.fromRGB(255, 127, 0),    -- سنتری
+    Color3.fromRGB(255, 255, 0),    -- پیلا
+    Color3.fromRGB(0, 255, 0),      -- سبز
+    Color3.fromRGB(0, 0, 255),      -- نیلا
+    Color3.fromRGB(75, 0, 130),     -- نیل
+    Color3.fromRGB(148, 0, 211),    -- بنفشی
+}
 
-local accumulatedBio = 0
-local accumulatedRP  = 0
+-- ===== GUI SETUP =====
+local function CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "RainbowNameGui"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-local PHASE_OFFSET = 0.22
+    -- Main Frame
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 500, 0, 220)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -110)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    MainFrame.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    MainFrame.BorderSizePixel = 2
+    MainFrame.Parent = ScreenGui
 
-RunService.RenderStepped:Connect(function(dt)
-    accumulatedBio = accumulatedBio + dt * SPEED
-    accumulatedRP  = accumulatedRP  + dt * SPEED
+    -- Close Button (X)
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.Size = UDim2.new(0, 40, 0, 40)
+    CloseButton.Position = UDim2.new(1, -45, 0, 5)
+    CloseButton.Text = "☐"
+    CloseButton.TextSize = 24
+    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseButton.BorderSizePixel = 0
+    CloseButton.Font = Enum.Font.GothamBold
+    CloseButton.Parent = MainFrame
 
-    local hueBio = (accumulatedBio + PHASE_OFFSET) % 1
-    local pastelBio = Color3.fromHSV(hueBio, SATURATION, VALUE)
+    -- ===== RP NAME SECTION =====
+    local NameLabel = Instance.new("TextLabel")
+    NameLabel.Name = "NameLabel"
+    NameLabel.Size = UDim2.new(0, 250, 0, 25)
+    NameLabel.Position = UDim2.new(0, 20, 0, 20)
+    NameLabel.Text = "RP NAME"
+    NameLabel.TextSize = 14
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameLabel.Font = Enum.Font.GothamBold
+    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    NameLabel.Parent = MainFrame
 
-    local hueRP = accumulatedRP % 1
-    local pastelRP = Color3.fromHSV(hueRP, SATURATION, VALUE)
+    local NameColorLabel = Instance.new("TextLabel")
+    NameColorLabel.Name = "NameColorLabel"
+    NameColorLabel.Size = UDim2.new(0, 150, 0, 25)
+    NameColorLabel.Position = UDim2.new(0, 330, 0, 20)
+    NameColorLabel.Text = "COLOR"
+    NameColorLabel.TextSize = 14
+    NameColorLabel.BackgroundTransparency = 1
+    NameColorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameColorLabel.Font = Enum.Font.GothamBold
+    NameColorLabel.TextXAlignment = Enum.TextXAlignment.Left
+    NameColorLabel.Parent = MainFrame
 
-    UpdateBioColor:FireServer(pastelBio)
-    UpdateRPColor:FireServer(pastelRP)
+    -- RP Name TextBox
+    local NameTextBox = Instance.new("TextBox")
+    NameTextBox.Name = "NameTextBox"
+    NameTextBox.Size = UDim2.new(0, 280, 0, 40)
+    NameTextBox.Position = UDim2.new(0, 20, 0, 50)
+    NameTextBox.PlaceholderText = "Enter RP Name..."
+    NameTextBox.Text = GetDisplayName()
+    NameTextBox.TextSize = 14
+    NameTextBox.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    NameTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    NameTextBox.BorderSizePixel = 0
+    NameTextBox.ClearTextOnFocus = false
+    NameTextBox.Parent = MainFrame
+
+    -- RP Name Color Box
+    local NameColorBox = Instance.new("Frame")
+    NameColorBox.Name = "NameColorBox"
+    NameColorBox.Size = UDim2.new(0, 130, 0, 40)
+    NameColorBox.Position = UDim2.new(0, 330, 0, 50)
+    NameColorBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    NameColorBox.BorderSizePixel = 2
+    NameColorBox.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    NameColorBox.Parent = MainFrame
+
+    -- Status Label
+    local StatusLabel = Instance.new("TextLabel")
+    StatusLabel.Name = "StatusLabel"
+    StatusLabel.Size = UDim2.new(0, 460, 0, 20)
+    StatusLabel.Position = UDim2.new(0, 20, 0, 95)
+    StatusLabel.Text = "✅ Running: " .. GetDisplayName()
+    StatusLabel.TextSize = 12
+    StatusLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    StatusLabel.BorderSizePixel = 0
+    StatusLabel.Parent = MainFrame
+
+    -- ===== SPEED SECTION =====
+    local SpeedLabel = Instance.new("TextLabel")
+    SpeedLabel.Name = "SpeedLabel"
+    SpeedLabel.Size = UDim2.new(0, 460, 0, 20)
+    SpeedLabel.Position = UDim2.new(0, 20, 0, 120)
+    SpeedLabel.Text = "⚡ Name Change Speed: 0.1s"
+    SpeedLabel.TextSize = 11
+    SpeedLabel.BackgroundTransparency = 1
+    SpeedLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+    SpeedLabel.BorderSizePixel = 0
+    SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    SpeedLabel.Parent = MainFrame
+
+    -- Speed Slider
+    local SpeedInput = Instance.new("TextBox")
+    SpeedInput.Name = "SpeedInput"
+    SpeedInput.Size = UDim2.new(0, 460, 0, 25)
+    SpeedInput.Position = UDim2.new(0, 20, 0, 140)
+    SpeedInput.PlaceholderText = "Enter speed (0.01 - 1.0 seconds)"
+    SpeedInput.Text = "0.1"
+    SpeedInput.TextSize = 12
+    SpeedInput.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SpeedInput.BorderColor3 = Color3.fromRGB(255, 200, 0)
+    SpeedInput.BorderSizePixel = 1
+    SpeedInput.Parent = MainFrame
+
+    -- Stop Button
+    local StopButton = Instance.new("TextButton")
+    StopButton.Name = "StopButton"
+    StopButton.Size = UDim2.new(0, 220, 0, 35)
+    StopButton.Position = UDim2.new(0, 20, 0, 175)
+    StopButton.Text = "⏹ Stop"
+    StopButton.TextSize = 13
+    StopButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StopButton.BorderSizePixel = 0
+    StopButton.Font = Enum.Font.GothamBold
+    StopButton.Parent = MainFrame
+
+    -- Start Button
+    local StartButton = Instance.new("TextButton")
+    StartButton.Name = "StartButton"
+    StartButton.Size = UDim2.new(0, 220, 0, 35)
+    StartButton.Position = UDim2.new(0, 260, 0, 175)
+    StartButton.Text = "▶ Start"
+    StartButton.TextSize = 13
+    StartButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    StartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StartButton.BorderSizePixel = 0
+    StartButton.Font = Enum.Font.GothamBold
+    StartButton.Parent = MainFrame
+
+    return ScreenGui, MainFrame, NameTextBox, NameColorBox,
+           StopButton, StartButton, CloseButton, StatusLabel, SpeedLabel, SpeedInput
+end
+
+-- ===== CREATE GUI =====
+local ScreenGui, MainFrame, NameTextBox, NameColorBox,
+      StopButton, StartButton, CloseButton, StatusLabel, SpeedLabel, SpeedInput = CreateGUI()
+
+-- ===== GET COLOR FUNCTION =====
+local colorIndex = 1
+local colorUpdateTimer = 0
+local colorUpdateInterval = 0.1
+
+local function GetNextColor()
+    if UseAllColors then
+        local color = RainbowColors[colorIndex]
+        colorIndex = colorIndex + 1
+        if colorIndex > #RainbowColors then
+            colorIndex = 1
+        end
+        return color
+    else
+        Hue = (Hue + (HueIncrement * ColorSpeed)) % 1
+        return Color3.fromHSV(Hue, 1, 1)
+    end
+end
+
+-- ===== RAINBOW FUNCTION =====
+local function StartRainbow()
+    local nameToUse = NameTextBox.Text ~= "" and NameTextBox.Text or GetDisplayName()
+    
+    if nameToUse == "" then
+        print("❌ Name is empty!")
+        if StatusLabel and StatusLabel.Parent then
+            StatusLabel.Text = "❌ Name is empty!"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        end
+        return
+    end
+    
+    Word = nameToUse
+    charCount = 1
+    
+    if Connection then
+        Connection:Disconnect()
+    end
+    
+    _G.RainbowStop = false
+    isRunning = true
+    print("✓ Started: " .. Word)
+    if StatusLabel and StatusLabel.Parent then
+        StatusLabel.Text = "✅ Running: " .. Word
+        StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    end
+    
+    Connection = RunService.Heartbeat:Connect(function(dt)
+        if _G.RainbowStop or Word == "" then
+            if Connection then
+                Connection:Disconnect()
+                Connection = nil
+            end
+            isRunning = false
+            return
+        end
+
+        -- ===== GET COLOR =====
+        local NewColor
+        if UseAllColors then
+            colorUpdateTimer = colorUpdateTimer + dt
+            if colorUpdateTimer >= colorUpdateInterval / ColorSpeed then
+                colorUpdateTimer = 0
+                NewColor = GetNextColor()
+                
+                -- Update Color Box (اگر GUI موجود ہو)
+                if NameColorBox and NameColorBox.Parent then
+                    NameColorBox.BackgroundColor3 = NewColor
+                end
+                
+                -- RP NAME COLOR
+                pcall(function()
+                    ColorRemote:FireServer(NewColor)
+                end)
+
+                -- BIO COLOR
+                lastBioUpdate = lastBioUpdate + dt
+                if lastBioUpdate >= BioUpdateFrequency then
+                    lastBioUpdate = 0
+                    pcall(function()
+                        if isBioColorRemoteFunction then
+                            BioColorRemote:InvokeServer(NewColor)
+                        else
+                            BioColorRemote:FireServer(NewColor)
+                        end
+                    end)
+                end
+            end
+        else
+            Hue = (Hue + (HueIncrement * ColorSpeed)) % 1
+            NewColor = Color3.fromHSV(Hue, 1, 1)
+
+            if NameColorBox and NameColorBox.Parent then
+                NameColorBox.BackgroundColor3 = NewColor
+            end
+
+            pcall(function()
+                ColorRemote:FireServer(NewColor)
+            end)
+
+            lastBioUpdate = lastBioUpdate + dt
+            if lastBioUpdate >= BioUpdateFrequency then
+                lastBioUpdate = 0
+                pcall(function()
+                    if isBioColorRemoteFunction then
+                        BioColorRemote:InvokeServer(NewColor)
+                    else
+                        BioColorRemote:FireServer(NewColor)
+                    end
+                end)
+            end
+        end
+
+        -- ===== TEXT TYPING (NameSpeed کے ساتھ) =====
+        lastNameUpdate = lastNameUpdate + dt
+        if lastNameUpdate >= NameSpeed then
+            lastNameUpdate = 0
+            local DisplayText = string.sub(Word, 1, charCount)
+            
+            pcall(function()
+                NameRemote:FireServer(DisplayText)
+            end)
+
+            charCount = (charCount >= #Word) and 1 or (charCount + 1)
+        end
+    end)
+end
+
+-- ===== SPEED INPUT EVENT =====
+SpeedInput.FocusLost:Connect(function()
+    local speedValue = tonumber(SpeedInput.Text)
+    if speedValue then
+        speedValue = math.clamp(speedValue, 0.01, 1.0)
+        NameSpeed = speedValue
+        SpeedInput.Text = tostring(speedValue)
+        SpeedLabel.Text = "⚡ Name Change Speed: " .. speedValue .. "s"
+        print("⚡ Speed changed to: " .. speedValue .. " seconds")
+    else
+        SpeedInput.Text = tostring(NameSpeed)
+    end
+end)
+
+-- ===== BUTTON EVENTS =====
+StartButton.MouseButton1Click:Connect(function()
+    StartRainbow()
+end)
+
+StopButton.MouseButton1Click:Connect(function()
+    _G.RainbowStop = true
+    isRunning = false
+    if StatusLabel and StatusLabel.Parent then
+        StatusLabel.Text = "⏸ Paused"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+    end
+    print("⏹️ Paused")
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    print("🗑 GUI Destroyed - Rainbow Continues in Background!")
+    print("✅ Rainbow System Still Running!")
+    
+    task.wait(0.2)
+    ScreenGui:Destroy()
+end)
+
+-- ===== TEXTBOX EVENT =====
+NameTextBox.FocusLost:Connect(function()
+    if NameTextBox.Text ~= "" and NameTextBox.Text ~= Word then
+        Word = NameTextBox.Text
+        charCount = 1
+        print("🔄 Name changed: " .. Word)
+        if StatusLabel and StatusLabel.Parent then
+            StatusLabel.Text = "✅ Running: " .. Word
+        end
+    end
+end)
+
+-- Auto start
+Word = GetDisplayName()
+NameTextBox.Text = Word
+StartRainbow()
+
+print("🌈 Rainbow System Started")
+print("💡 GUI Destroyed ہونے کے بعد بھی Rainbow چلتا رہے گا!")
+
+-- Cleanup (صرف script بند ہونے پر)
+script.AncestryChanged:Connect(function()
+    if not script.Parent then
+        _G.RainbowStop = true
+        if Connection then
+            Connection:Disconnect()
+        end
+        print("⏹️ Rainbow System Stopped")
+    end
 end)
