@@ -2,6 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 
 -- EVENTS
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -45,57 +47,119 @@ local RainbowColors = {
     Color3.fromRGB(148, 0, 211),    -- بنفشی
 }
 
--- ===== GUI SETUP =====
+-- ===== BACKGROUND SOUND CORE =====
+local PremiumAudio = Instance.new("Sound")
+PremiumAudio.SoundId = "rbxassetid://452267918"
+PremiumAudio.Volume = 0.25
+PremiumAudio.Looped = true
+PremiumAudio.Parent = SoundService
+PremiumAudio:Play()
+
+-- ===== GUI SETUP (VISUALLY MODERNIZED ONLY) =====
 local function CreateGUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "RainbowNameGui"
     ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
-    -- Main Frame
+    -- Main Frame (Dark Glossy Theme)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 500, 0, 220)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -110)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    MainFrame.BorderColor3 = Color3.fromRGB(100, 100, 100)
-    MainFrame.BorderSizePixel = 2
+    MainFrame.Size = UDim2.new(0, 500, 0, 240)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -120)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+    MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 10)
+    MainCorner.Parent = MainFrame
+
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromRGB(50, 50, 60)
+    MainStroke.Thickness = 1.2
+    MainStroke.Parent = MainFrame
+
+    -- DYNAMIC AVATAR THUMBNAIL (PFP)
+    local PfpImage = Instance.new("ImageLabel")
+    PfpImage.Name = "PlayerPFP"
+    PfpImage.Size = UDim2.new(0, 42, 0, 42)
+    PfpImage.Position = UDim2.new(0, 15, 0, 15)
+    PfpImage.BackgroundTransparency = 1
+    PfpImage.Image = "rbxthumb://type=AvatarHeadShot&id="..LocalPlayer.UserId.."&w=150&h=150"
+    PfpImage.Parent = MainFrame
+
+    local PfpCorner = Instance.new("UICorner")
+    PfpCorner.CornerRadius = UDim.new(1, 0)
+    PfpCorner.Parent = PfpImage
+
+    local PfpStroke = Instance.new("UIStroke")
+    PfpStroke.Color = Color3.fromRGB(80, 80, 95)
+    PfpStroke.Thickness = 1
+    PfpStroke.Parent = PfpImage
+
+    -- TITLES
+    local ScriptTitle = Instance.new("TextLabel")
+    ScriptTitle.Size = UDim2.new(0, 200, 0, 20)
+    ScriptTitle.Position = UDim2.new(0, 68, 0, 16)
+    ScriptTitle.Text = "GyuGirl Developer"
+    ScriptTitle.Font = Enum.Font.GothamBold
+    ScriptTitle.TextSize = 16
+    ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ScriptTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ScriptTitle.BackgroundTransparency = 1
+    ScriptTitle.Parent = MainFrame
+
+    local ScriptSubText = Instance.new("TextLabel")
+    ScriptSubText.Size = UDim2.new(0, 200, 0, 14)
+    ScriptSubText.Position = UDim2.new(0, 68, 0, 36)
+    ScriptSubText.Text = "This Script Has Been Execute By GyuGirl Developer"
+    ScriptSubText.Font = Enum.Font.GothamMedium
+    ScriptSubText.TextSize = 11
+    ScriptSubText.TextColor3 = Color3.fromRGB(130, 130, 145)
+    ScriptSubText.TextXAlignment = Enum.TextXAlignment.Left
+    ScriptSubText.BackgroundTransparency = 1
+    ScriptSubText.Parent = MainFrame
 
     -- Close Button (X)
     local CloseButton = Instance.new("TextButton")
     CloseButton.Name = "CloseButton"
-    CloseButton.Size = UDim2.new(0, 40, 0, 40)
-    CloseButton.Position = UDim2.new(1, -45, 0, 5)
-    CloseButton.Text = "☐"
-    CloseButton.TextSize = 24
-    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    CloseButton.Size = UDim2.new(0, 30, 0, 30)
+    CloseButton.Position = UDim2.new(1, -40, 0, 15)
+    CloseButton.Text = "×"
+    CloseButton.TextSize = 22
+    CloseButton.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
     CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseButton.BorderSizePixel = 0
     CloseButton.Font = Enum.Font.GothamBold
     CloseButton.Parent = MainFrame
 
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 6)
+    CloseCorner.Parent = CloseButton
+
     -- ===== RP NAME SECTION =====
     local NameLabel = Instance.new("TextLabel")
     NameLabel.Name = "NameLabel"
-    NameLabel.Size = UDim2.new(0, 250, 0, 25)
-    NameLabel.Position = UDim2.new(0, 20, 0, 20)
-    NameLabel.Text = "RP NAME"
-    NameLabel.TextSize = 14
+    NameLabel.Size = UDim2.new(0, 250, 0, 15)
+    NameLabel.Position = UDim2.new(0, 20, 0, 70)
+    NameLabel.Text = "TARGET RP NAME"
+    NameLabel.TextSize = 10
     NameLabel.BackgroundTransparency = 1
-    NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.Parent = MainFrame
 
     local NameColorLabel = Instance.new("TextLabel")
     NameColorLabel.Name = "NameColorLabel"
-    NameColorLabel.Size = UDim2.new(0, 150, 0, 25)
-    NameColorLabel.Position = UDim2.new(0, 330, 0, 20)
-    NameColorLabel.Text = "COLOR"
-    NameColorLabel.TextSize = 14
+    NameColorLabel.Size = UDim2.new(0, 130, 0, 15)
+    NameColorLabel.Position = UDim2.new(0, 350, 0, 70)
+    NameColorLabel.Text = "LIVE MATRIX PREVIEW"
+    NameColorLabel.TextSize = 10
     NameColorLabel.BackgroundTransparency = 1
-    NameColorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameColorLabel.TextColor3 = Color3.fromRGB(160, 160, 175)
     NameColorLabel.Font = Enum.Font.GothamBold
     NameColorLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameColorLabel.Parent = MainFrame
@@ -103,91 +167,151 @@ local function CreateGUI()
     -- RP Name TextBox
     local NameTextBox = Instance.new("TextBox")
     NameTextBox.Name = "NameTextBox"
-    NameTextBox.Size = UDim2.new(0, 280, 0, 40)
-    NameTextBox.Position = UDim2.new(0, 20, 0, 50)
+    NameTextBox.Size = UDim2.new(0, 310, 0, 36)
+    NameTextBox.Position = UDim2.new(0, 20, 0, 90)
     NameTextBox.PlaceholderText = "Enter RP Name..."
     NameTextBox.Text = GetDisplayName()
-    NameTextBox.TextSize = 14
-    NameTextBox.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-    NameTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    NameTextBox.TextSize = 13
+    NameTextBox.Font = Enum.Font.GothamSemibold
+    NameTextBox.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    NameTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     NameTextBox.BorderSizePixel = 0
     NameTextBox.ClearTextOnFocus = false
     NameTextBox.Parent = MainFrame
 
+    local BoxCorner1 = Instance.new("UICorner")
+    BoxCorner1.CornerRadius = UDim.new(0, 6)
+    BoxCorner1.Parent = NameTextBox
+
     -- RP Name Color Box
     local NameColorBox = Instance.new("Frame")
     NameColorBox.Name = "NameColorBox"
-    NameColorBox.Size = UDim2.new(0, 130, 0, 40)
-    NameColorBox.Position = UDim2.new(0, 330, 0, 50)
+    NameColorBox.Size = UDim2.new(0, 130, 0, 36)
+    NameColorBox.Position = UDim2.new(0, 350, 0, 90)
     NameColorBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    NameColorBox.BorderSizePixel = 2
-    NameColorBox.BorderColor3 = Color3.fromRGB(100, 100, 100)
+    NameColorBox.BorderSizePixel = 0
     NameColorBox.Parent = MainFrame
+
+    local BoxCorner2 = Instance.new("UICorner")
+    BoxCorner2.CornerRadius = UDim.new(0, 6)
+    BoxCorner2.Parent = NameColorBox
 
     -- Status Label
     local StatusLabel = Instance.new("TextLabel")
     StatusLabel.Name = "StatusLabel"
-    StatusLabel.Size = UDim2.new(0, 460, 0, 20)
-    StatusLabel.Position = UDim2.new(0, 20, 0, 95)
+    StatusLabel.Size = UDim2.new(0, 460, 0, 24)
+    StatusLabel.Position = UDim2.new(0, 20, 0, 135)
     StatusLabel.Text = "✅ Running: " .. GetDisplayName()
-    StatusLabel.TextSize = 12
-    StatusLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    StatusLabel.TextSize = 11
+    StatusLabel.Font = Enum.Font.GothamMedium
+    StatusLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    StatusLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
     StatusLabel.BorderSizePixel = 0
     StatusLabel.Parent = MainFrame
+
+    local StatusCorner = Instance.new("UICorner")
+    StatusCorner.CornerRadius = UDim.new(0, 4)
+    StatusCorner.Parent = StatusLabel
 
     -- ===== SPEED SECTION =====
     local SpeedLabel = Instance.new("TextLabel")
     SpeedLabel.Name = "SpeedLabel"
-    SpeedLabel.Size = UDim2.new(0, 460, 0, 20)
-    SpeedLabel.Position = UDim2.new(0, 20, 0, 120)
+    SpeedLabel.Size = UDim2.new(0, 460, 0, 15)
+    SpeedLabel.Position = UDim2.new(0, 20, 0, 168)
     SpeedLabel.Text = "⚡ Name Change Speed: 0.1s"
     SpeedLabel.TextSize = 11
+    SpeedLabel.Font = Enum.Font.GothamMedium
     SpeedLabel.BackgroundTransparency = 1
-    SpeedLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-    SpeedLabel.BorderSizePixel = 0
+    SpeedLabel.TextColor3 = Color3.fromRGB(241, 196, 15)
     SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
     SpeedLabel.Parent = MainFrame
 
-    -- Speed Slider
+    -- Speed Slider (TextBox Input)
     local SpeedInput = Instance.new("TextBox")
     SpeedInput.Name = "SpeedInput"
-    SpeedInput.Size = UDim2.new(0, 460, 0, 25)
-    SpeedInput.Position = UDim2.new(0, 20, 0, 140)
+    SpeedInput.Size = UDim2.new(0, 460, 0, 24)
+    SpeedInput.Position = UDim2.new(0, 20, 0, 188)
     SpeedInput.PlaceholderText = "Enter speed (0.01 - 1.0 seconds)"
     SpeedInput.Text = "0.1"
-    SpeedInput.TextSize = 12
-    SpeedInput.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    SpeedInput.TextSize = 11
+    SpeedInput.Font = Enum.Font.Gotham
+    SpeedInput.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
     SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SpeedInput.BorderColor3 = Color3.fromRGB(255, 200, 0)
-    SpeedInput.BorderSizePixel = 1
+    SpeedInput.BorderSizePixel = 0
     SpeedInput.Parent = MainFrame
+
+    local SpeedCorner = Instance.new("UICorner")
+    SpeedCorner.CornerRadius = UDim.new(0, 4)
+    SpeedCorner.Parent = SpeedInput
 
     -- Stop Button
     local StopButton = Instance.new("TextButton")
     StopButton.Name = "StopButton"
-    StopButton.Size = UDim2.new(0, 220, 0, 35)
-    StopButton.Position = UDim2.new(0, 20, 0, 175)
-    StopButton.Text = "⏹ Stop"
-    StopButton.TextSize = 13
-    StopButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    StopButton.Size = UDim2.new(0, 220, 0, 32)
+    StopButton.Position = UDim2.new(0, 20, 0, 222)
+    StopButton.Text = "⏹ STOP"
+    StopButton.TextSize = 12
+    StopButton.BackgroundColor3 = Color3.fromRGB(192, 57, 43)
     StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     StopButton.BorderSizePixel = 0
     StopButton.Font = Enum.Font.GothamBold
     StopButton.Parent = MainFrame
 
+    local StopCorner = Instance.new("UICorner")
+    StopCorner.CornerRadius = UDim.new(0, 6)
+    StopCorner.Parent = StopButton
+
     -- Start Button
     local StartButton = Instance.new("TextButton")
     StartButton.Name = "StartButton"
-    StartButton.Size = UDim2.new(0, 220, 0, 35)
-    StartButton.Position = UDim2.new(0, 260, 0, 175)
-    StartButton.Text = "▶ Start"
-    StartButton.TextSize = 13
-    StartButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    StartButton.Size = UDim2.new(0, 220, 0, 32)
+    StartButton.Position = UDim2.new(0, 260, 0, 222)
+    StartButton.Text = "▶ START"
+    StartButton.TextSize = 12
+    StartButton.BackgroundColor3 = Color3.fromRGB(39, 174, 96)
     StartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     StartButton.BorderSizePixel = 0
     StartButton.Font = Enum.Font.GothamBold
     StartButton.Parent = MainFrame
+
+    local StartCorner = Instance.new("UICorner")
+    StartCorner.CornerRadius = UDim.new(0, 6)
+    StartCorner.Parent = StartButton
+
+    -- NOTIFICATION POPUP ANIMATION
+    local NotifyFrame = Instance.new("Frame")
+    NotifyFrame.Size = UDim2.new(0, 320, 0, 45)
+    NotifyFrame.Position = UDim2.new(0.5, -160, 1, 30)
+    NotifyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+    NotifyFrame.BorderSizePixel = 0
+    NotifyFrame.ZIndex = 20
+    NotifyFrame.Parent = ScreenGui
+
+    local NotifCorner = Instance.new("UICorner")
+    NotifCorner.CornerRadius = UDim.new(0, 6)
+    NotifCorner.Parent = NotifyFrame
+
+    local NotifStroke = Instance.new("UIStroke")
+    NotifStroke.Color = Color3.fromRGB(142, 68, 173)
+    NotifStroke.Thickness = 1.5
+    NotifStroke.Parent = NotifyFrame
+
+    local NotifLabel = Instance.new("TextLabel")
+    NotifLabel.Size = UDim2.new(1, 0, 1, 0)
+    NotifLabel.Text = "✨ Interface Loaded Successfully!"
+    NotifLabel.Font = Enum.Font.GothamSemibold
+    NotifLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NotifLabel.TextSize = 12
+    NotifLabel.BackgroundTransparency = 1
+    NotifLabel.Parent = NotifyFrame
+
+    task.spawn(function()
+        TweenService:Create(NotifyFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -160, 0.82, 0)}):Play()
+        task.wait(3.5)
+        TweenService:Create(NotifyFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -160, 1, 30)}):Play()
+        task.wait(0.5)
+        NotifyFrame:Destroy()
+    end)
 
     return ScreenGui, MainFrame, NameTextBox, NameColorBox,
            StopButton, StartButton, CloseButton, StatusLabel, SpeedLabel, SpeedInput
@@ -241,7 +365,7 @@ local function StartRainbow()
     print("✓ Started: " .. Word)
     if StatusLabel and StatusLabel.Parent then
         StatusLabel.Text = "✅ Running: " .. Word
-        StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        StatusLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
     end
     
     Connection = RunService.Heartbeat:Connect(function(dt)
@@ -349,7 +473,7 @@ StopButton.MouseButton1Click:Connect(function()
     isRunning = false
     if StatusLabel and StatusLabel.Parent then
         StatusLabel.Text = "⏸ Paused"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 150, 0)
+        StatusLabel.TextColor3 = Color3.fromRGB(231, 76, 60)
     end
     print("⏹️ Paused")
 end)
@@ -357,7 +481,10 @@ end)
 CloseButton.MouseButton1Click:Connect(function()
     print("🗑 GUI Destroyed - Rainbow Continues in Background!")
     print("✅ Rainbow System Still Running!")
-    
+    if PremiumAudio then
+        PremiumAudio:Stop()
+        PremiumAudio:Destroy()
+    end
     task.wait(0.2)
     ScreenGui:Destroy()
 end)
