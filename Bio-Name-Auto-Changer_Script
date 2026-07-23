@@ -88,7 +88,7 @@ local function CreateGUI()
     PfpImage.Position = UDim2.new(0, 15, 0, 15)
     PfpImage.BackgroundTransparency = 1
     -- Yahan aap apni custom GyuGirl logo ya anime character ki Roblox Asset ID dal sakte hain:
-    PfpImage.Image = "rbxassetid://91333748176705" 
+    PfpImage.Image = "rbxassetid://99721587020698" 
     PfpImage.Parent = MainFrame
 
     local PfpCorner = Instance.new("UICorner")
@@ -104,7 +104,7 @@ local function CreateGUI()
     local ScriptTitle = Instance.new("TextLabel")
     ScriptTitle.Size = UDim2.new(0, 200, 0, 20)
     ScriptTitle.Position = UDim2.new(0, 68, 0, 16)
-    ScriptTitle.Text = "GyuGirl Developer"
+    ScriptTitle.Text = "Li_Family Developer"
     ScriptTitle.Font = Enum.Font.GothamBold
     ScriptTitle.TextSize = 16
     ScriptTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -115,7 +115,7 @@ local function CreateGUI()
     local ScriptSubText = Instance.new("TextLabel")
     ScriptSubText.Size = UDim2.new(0, 300, 0, 14)
     ScriptSubText.Position = UDim2.new(0, 68, 0, 36)
-    ScriptSubText.Text = "This Script Has Been Executed By GyuGirl Developer"
+    ScriptSubText.Text = "This Script Has Been Executed By Li_Family Developer"
     ScriptSubText.Font = Enum.Font.GothamMedium
     ScriptSubText.TextSize = 10
     ScriptSubText.TextColor3 = Color3.fromRGB(142, 68, 173) -- Colored theme line
@@ -299,7 +299,7 @@ local function CreateGUI()
 
     local NotifLabel = Instance.new("TextLabel")
     NotifLabel.Size = UDim2.new(1, 0, 1, 0)
-    NotifLabel.Text = "✨ This Script has Been Execute By GyuGirl Developer"
+    NotifLabel.Text = "✨ This Script has Been Execute By Li_Family Developer"
     NotifLabel.Font = Enum.Font.GothamSemibold
     NotifLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     NotifLabel.TextSize = 12
